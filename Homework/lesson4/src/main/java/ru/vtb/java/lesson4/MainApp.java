@@ -10,68 +10,39 @@ public class MainApp {
     public static void main(String[] args) throws Exception {
         System.out.println("Program started!");
 
-        var firstMethodResult = firstMethod(100000000);
-        System.out.println(String.format("First method. Full time: %d ms. Adding distinct values time: %d ms",
-                firstMethodResult[0], firstMethodResult[1]));
-        // First method. Full time: 46660 ms. Adding distinct values time: 5828 ms
+        //var firstMethodResult = firstMethod(100000000);
+        //System.out.println(String.format("First method. Full time: %d ms", firstMethodResult));
+        // First method. Full time: 15258 ms
 
         var size = 100000000;
         float[] arr = new float[size];
-        var theadsCount = 30;
+        Arrays.fill(arr, 1f);
+        var theadsCount = 15;
         var secondMethodResult = secondMethod(arr, theadsCount);
-        System.out.println(String.format("Second method. Full time: %d ms. Adding distinct values time: %d ms",
-                secondMethodResult[0], secondMethodResult[1]));
-        // 7 потоков. Second method. Full time: 32062 ms. Adding distinct values time: 16909 ms
-        // 30 потоков. Second method. Full time: 42317 ms. Adding distinct values time: 52762 ms!!!1!11АДЫН1!
+        System.out.println(String.format("Second method. ThreadsCount: %d, full time: %d ms.", theadsCount, secondMethodResult));
+        // Second method. ThreadsCount: 5, full time: 4215 ms.
+        // Все-равно небыстро.
 
         System.out.println("---------------------------------------------------");
         System.out.println("Program finished!");
-        // Резюме.
-        // 1. Значение в 1 и 2 случаях считается за условно равное время. Дальше проверка (которая к вычислениям не имеет
-        //    отношения). В итоге время на новые значения в 1 и 2 случае должно быть одно и то же.
-        //    Но см. п.3
-
-        // 2. Почему разница в работе кода в целом незначительная (46 и 32 сек соотв.) - коллекция дублей общая в случае потоков.
-        //    Там наверняка zynchronized (lock1), так что они тут как в ~1 поток работают с ней + п.3 опять же.
-
-        // 3. Почему время непосредственно вычислений так увеличилось в случае 2. При 30 потоках вообще дичь...
-        //    Предположу, что при 1 потоке условно значение считается за 1ms. А при 30 за условно 2ms (потоков много, комп тормозит).
-        //    Поэтому и общее время работы потоков вырастает (п.2). И время непосредственно вычислений станет неприличным (п.1).
-
-        // Ну либо я что-то глобально не так сделал=)
     }
 
 
     // создает массив, обсчитывает его в одном потоке
-    private static Long[] firstMethod(int arraySize) {
+    private static Long firstMethod(int arraySize) {
         float[] arr = new float[arraySize];
-
         Arrays.fill(arr, 1f);
 
-        HashSet<Float> existedValuesSet = new HashSet();
-
-        long resultTime = 0;
         long fullTime = System.currentTimeMillis();
-        long operationExecutionTime;
         for (var i = 0; i < arr.length; i++) {
-            operationExecutionTime = System.currentTimeMillis();
             arr[i] = (float) (arr[i] * Math.sin(0.2f + i / 5) * Math.cos(0.2f + i / 5) * Math.cos(0.4f + i / 2));
-            operationExecutionTime = System.currentTimeMillis() - operationExecutionTime;
-
-            // он их добавляет, считая хэш. Т.е. и с ~примерными float'ами должен справиться.
-            if (existedValuesSet.add(arr[i])) {
-                resultTime += operationExecutionTime;
-            }
         }
 
-        return new Long[] { System.currentTimeMillis() - fullTime, resultTime };
+        var result = System.currentTimeMillis() - fullTime;
+        return result;
     }
 
-    private static Long[] secondMethod(float[] arr, int threadsCount) throws InterruptedException {
-        long[] result = new long[threadsCount];
-        Arrays.fill(result, 0);
-        long fullTime = System.currentTimeMillis();
-
+    private static Long secondMethod(float[] arr, int threadsCount) throws InterruptedException {
         var calculatorExecutor = Executors.newFixedThreadPool(threadsCount);
 
         // Логика: в цикле запустим потоки, каждый из которых будет работать с кусочком массива.
@@ -80,28 +51,17 @@ public class MainApp {
         // которое надо посчитать, не скажется.
         var splitSize = Math.round(arr.length / threadsCount);
         int firstIndex = 0, lastIndex = 0;
-        // вроде потокобезопасная
-        Set<Float> existedValuesSet = ConcurrentHashMap.newKeySet();
+        long fullTime = System.currentTimeMillis();
         for (var threadNumber = 0; threadNumber < threadsCount; threadNumber++) {
             firstIndex = lastIndex;
             lastIndex = (threadNumber + 1 == threadsCount ? arr.length : firstIndex + splitSize);
 
             // поток запускаем
-            int finalThreadNumber = threadNumber;
             int finalFirstIndex = firstIndex;
             int finalLastIndex = lastIndex;
             calculatorExecutor.execute(() -> {
-                long operationExecutionTime;
                 for (var i = finalFirstIndex; i < finalLastIndex; i++) {
-                    arr[i] = 1f;
-
-                    operationExecutionTime = System.currentTimeMillis();
                     arr[i] = (float) (arr[i] * Math.sin(0.2f + i / 5) * Math.cos(0.2f + i / 5) * Math.cos(0.4f + i / 2));
-                    operationExecutionTime = System.currentTimeMillis() - operationExecutionTime;
-
-                    if (existedValuesSet.add(arr[i])) {
-                        result[finalThreadNumber] += operationExecutionTime;
-                    }
                 }
             });
         }
@@ -115,6 +75,7 @@ public class MainApp {
             System.out.println(ex.getMessage());
         }
 
-        return new Long[] { System.currentTimeMillis() - fullTime, Arrays.stream(result).sum() };
+        var result = System.currentTimeMillis() - fullTime;
+        return result;
     }
 }
