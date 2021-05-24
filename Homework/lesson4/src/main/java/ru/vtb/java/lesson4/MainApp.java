@@ -10,18 +10,16 @@ public class MainApp {
     public static void main(String[] args) throws Exception {
         System.out.println("Program started!");
 
-        var firstMethodResult = firstMethod(100000000);
-        System.out.println(String.format("First method. Full time: %d ms", firstMethodResult));
-        // First method. Full time: 15258 ms
+        firstMethod(100000000);
+        // First method. Full time: 15078 ms
 
         var size = 100000000;
         float[] arr = new float[size];
         Arrays.fill(arr, 1f);
-        var theadsCount = 5;
-        var secondMethodResult = secondMethod(arr, theadsCount);
-        System.out.println(String.format("Second method. ThreadsCount: %d, full time: %d ms.", theadsCount, secondMethodResult));
-        // Second method. ThreadsCount: 5, full time: 4215 ms.
-        // Все-равно небыстро.
+        var theadsCount = 10;
+        secondMethod(arr, theadsCount);
+        // Second method. ThreadsCount: 10, full time: 4623 ms.
+        // Время все-равно приличное.
 
         System.out.println("---------------------------------------------------");
         System.out.println("Program finished!");
@@ -29,7 +27,7 @@ public class MainApp {
 
 
     // создает массив, обсчитывает его в одном потоке
-    private static Long firstMethod(int arraySize) {
+    private static void firstMethod(int arraySize) {
         float[] arr = new float[arraySize];
         Arrays.fill(arr, 1f);
 
@@ -39,27 +37,28 @@ public class MainApp {
         }
 
         var result = System.currentTimeMillis() - fullTime;
-        return result;
+        System.out.println(String.format("First method. Full time: %d ms", result));
     }
 
-    private static Long secondMethod(float[] arr, int threadsCount) throws InterruptedException {
+    private static void secondMethod(float[] arr, int threadsCount) {
+        long fullTime = System.currentTimeMillis();
+
         var calculatorExecutor = Executors.newFixedThreadPool(threadsCount);
 
-        // Логика: в цикле запустим потоки, каждый из которых будет работать с кусочком массива.
-        // Кусочки (начальный и конечный индексы) вычислим перед запуском каждого потока.
-        // Даже если в индексах чуть запутаюсь (first = last след итерации) - пофиг. Два раза где-то вычислится значение - на времени,
-        // которое надо посчитать, не скажется.
         var splitSize = Math.round(arr.length / threadsCount);
         int firstIndex = 0, lastIndex = 0;
-        long fullTime = System.currentTimeMillis();
         for (var threadNumber = 0; threadNumber < threadsCount; threadNumber++) {
             firstIndex = lastIndex;
             lastIndex = (threadNumber + 1 == threadsCount ? arr.length : firstIndex + splitSize);
 
-            // поток запускаем
+            // потоки запускаем
+            int finelThreadNumber = threadNumber;
             int finalFirstIndex = firstIndex;
             int finalLastIndex = lastIndex;
             calculatorExecutor.execute(() -> {
+                // на всякий посмотреть, что потоки нужные данные получили
+                System.out.println(finelThreadNumber + " | " + finalFirstIndex + " | " + finalLastIndex);
+
                 for (var i = finalFirstIndex; i < finalLastIndex; i++) {
                     arr[i] = (float) (arr[i] * Math.sin(0.2f + i / 5) * Math.cos(0.2f + i / 5) * Math.cos(0.4f + i / 2));
                 }
@@ -67,7 +66,6 @@ public class MainApp {
         }
 
         calculatorExecutor.shutdown();
-        // Может прослушал. Но без этого (awaitTermination) прога просто пролетала, не дожидаясь выполнения потоков.
         try {
             calculatorExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         }
@@ -76,6 +74,6 @@ public class MainApp {
         }
 
         var result = System.currentTimeMillis() - fullTime;
-        return result;
+        System.out.println(String.format("Second method. ThreadsCount: %d, full time: %d ms.", threadsCount, result));
     }
 }
