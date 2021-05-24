@@ -10,14 +10,14 @@ public class MainApp {
     public static void main(String[] args) throws Exception {
         System.out.println("Program started!");
 
-        //var firstMethodResult = firstMethod(100000000);
-        //System.out.println(String.format("First method. Full time: %d ms", firstMethodResult));
+        var firstMethodResult = firstMethod(100000000);
+        System.out.println(String.format("First method. Full time: %d ms", firstMethodResult));
         // First method. Full time: 15258 ms
 
         var size = 100000000;
         float[] arr = new float[size];
         Arrays.fill(arr, 1f);
-        var theadsCount = 15;
+        var theadsCount = 5;
         var secondMethodResult = secondMethod(arr, theadsCount);
         System.out.println(String.format("Second method. ThreadsCount: %d, full time: %d ms.", theadsCount, secondMethodResult));
         // Second method. ThreadsCount: 5, full time: 4215 ms.
