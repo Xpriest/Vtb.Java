@@ -3,14 +3,28 @@ import ru.vtb.java.lesson5.cars.Race;
 import ru.vtb.java.lesson5.cars.Road;
 import ru.vtb.java.lesson5.cars.Tunnel;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 public class MainClass {
     public static final int CARS_COUNT = 4;
 
     public static void main(String[] args) {
+        List<Integer> intL = new ArrayList<>();
+        intL.add(1);
+        intL.add(2);
+        intL.add(3);
+        intL.add(4);
+        var stream1 = intL.stream().filter(m -> m % 2 == 0);
+        if (true){
+            var res = stream1.map(m -> m + 5).collect(Collectors.toList());
+            System.out.println(res);
+        }
         System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Подготовка!!!");
 
         // чтобы в тоннель только половина машин влезла
