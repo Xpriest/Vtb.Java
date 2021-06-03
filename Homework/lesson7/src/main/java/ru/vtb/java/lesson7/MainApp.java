@@ -18,6 +18,8 @@ public class MainApp {
         testOrm.save(testTableObject2);
         testOrm.save(testTableObject3);
 
+        testOrm.closeDbConnection();
+
         System.out.println("---------------------------------------------------");
         System.out.println("Program finished!");
     }

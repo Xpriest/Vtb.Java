@@ -18,6 +18,11 @@ public class TestOrm {
     private Connection connection;
     private Statement statement;
 
+    public TestOrm() {
+        createDbConnection();
+    }
+
+
     // создаем таблицу по переданному объекту, если он размечен
     public void createTable(Object inputObject) throws Exception {
         // create table_name (id integer, name string)
@@ -129,14 +134,9 @@ public class TestOrm {
 
     private void executeSqlCommand(String sqlCommand) throws SQLException {
         try {
-            createDbConnection();
-
             statement.executeUpdate(sqlCommand);
         } catch (SQLException ex) {
             ex.printStackTrace();
-        }
-        finally {
-            closeDbConnection();
         }
     }
 
@@ -151,7 +151,7 @@ public class TestOrm {
     }
 
     // конект к базе закрываем
-    private void closeDbConnection() {
+    public void closeDbConnection() {
         try {
             if (statement != null)
                 statement.close();
